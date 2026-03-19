@@ -1,3 +1,5 @@
+-- added kick reason from github.com/evaera/Cmdr/pull/357
+
 return {
 	Name = "kick",
 	Aliases = { "boot" },
@@ -8,6 +10,12 @@ return {
 			Type = "players",
 			Name = "players",
 			Description = "The players to kick.",
+		},
+		{
+			Type = "string",
+			Name = "reason",
+			Description = "The reason to kick the players.",
+			Optional = true,
 		},
 	},
 }

@@ -71,6 +71,7 @@ do
 		ActivationUnlocksMouse = false,
 		HideOnLostFocus = true,
 		PlaceName = "Cmdr",
+		ShellColor = Color3.fromRGB(255, 223, 93),
 		Util = Util,
 		Events = {},
 	}, {
@@ -90,7 +91,11 @@ do
 	Cmdr.Dispatcher = require(Shared.Dispatcher)(Cmdr)
 end
 
-if StarterGui:WaitForChild("Cmdr") and wait() and Player:WaitForChild("PlayerGui"):FindFirstChild("Cmdr") == nil then
+if
+	StarterGui:WaitForChild("Cmdr")
+	and task.wait()
+	and Player:WaitForChild("PlayerGui"):FindFirstChild("Cmdr") == nil
+then
 	StarterGui.Cmdr:Clone().Parent = Player.PlayerGui
 end
 
@@ -112,6 +117,16 @@ end
 ]=]
 function Cmdr:SetPlaceName(name: string)
 	self.PlaceName = name
+	Interface.Window:UpdateLabel()
+end
+
+--[=[
+	Sets the shell color used by the interface label.
+
+	@within CmdrClient
+]=]
+function Cmdr:SetShellColor(color: Color3)
+	self.ShellColor = color
 	Interface.Window:UpdateLabel()
 end
 

@@ -7,6 +7,7 @@ local Player = Players.LocalPlayer
 
 local WINDOW_MAX_HEIGHT = 300
 local MOUSE_TOUCH_ENUM = { Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2, Enum.UserInputType.Touch }
+local HasLostFocus = nil
 
 -- Window handles the command bar GUI
 local Window = {
@@ -26,6 +27,7 @@ Line.Parent = nil
 
 -- Update the text entry label
 function Window:UpdateLabel()
+	Entry.TextLabel.TextColor3 = self.Cmdr.ShellColor
 	Entry.TextLabel.Text =
 		`{Player.Name}{if self.Cmdr.PlaceName and self.Cmdr.PlaceName ~= "" then `@{self.Cmdr.PlaceName}` else ""}$`
 end
@@ -151,26 +153,44 @@ function Window:HideInvalidState()
 	Entry.TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 
--- Event handler for text box focus lost
+--- Event handler for text box focus lost
 function Window:LoseFocus(submit)
+	--// If lost focus then return
+	if HasLostFocus then
+		return
+	end
+
+	--// Set to true
+	HasLostFocus = true
+
+	--// Fetch current text
 	local text = Entry.TextBox.Text
 
+	--// Clear history
 	self:ClearHistoryState()
 
-	if Gui.Visible and not GuiService.MenuIsOpen and not UserInputService.TouchEnabled then
+	--// YK
+	if Gui.Visible and not GuiService.MenuIsOpen then
 		-- self:SetEntryText("")
 		Entry.TextBox:CaptureFocus()
 	elseif GuiService.MenuIsOpen and Gui.Visible then
 		self:Hide()
 	end
 
+	--// Bug fix for duplicate command run
+	task.wait(0.1)
+
+	--// Yes
 	if submit and self.Valid then
-		wait()
 		self:SetEntryText("")
 		self.ProcessEntry(text)
 	elseif submit then
+		--// Error
 		self:AddLine(self._errorText, Color3.fromRGB(255, 153, 153))
 	end
+
+	--// Set as no longer lost focus
+	HasLostFocus = nil
 end
 
 function Window:TraverseHistory(delta)
@@ -229,7 +249,7 @@ function Window:BeginInput(input, gameProcessed)
 			lastPressTime = tick()
 		elseif self.Cmdr.Enabled then
 			self:SetVisible(not self:IsVisible())
-			wait()
+			task.wait()
 			self:SetEntryText("")
 
 			if GuiService.MenuIsOpen then -- Special case for menu getting stuck open (roblox bug)
@@ -248,6 +268,12 @@ function Window:BeginInput(input, gameProcessed)
 		return
 	end
 
+	-- Press escape to hide the ui
+	if input.KeyCode == Enum.KeyCode.Escape then
+		self:Hide()
+		return
+	end
+
 	if self.Cmdr.HideOnLostFocus and table.find(MOUSE_TOUCH_ENUM, input.UserInputType) then
 		local ps = input.Position
 		local ap = Gui.AbsolutePosition
@@ -260,7 +286,7 @@ function Window:BeginInput(input, gameProcessed)
 	elseif input.KeyCode == Enum.KeyCode.Up then -- Auto Complete Up
 		self:SelectVertical(-1)
 	elseif input.KeyCode == Enum.KeyCode.Return then -- Eat new lines
-		wait()
+		task.wait()
 		self:SetEntryText(self:GetEntryText():gsub("\n", ""):gsub("\r", ""))
 	elseif input.KeyCode == Enum.KeyCode.Tab then -- Auto complete
 		local item = self.AutoComplete:GetSelectedItem()
@@ -303,12 +329,12 @@ function Window:BeginInput(input, gameProcessed)
 				newText = replace
 			end
 			-- need to wait a frame so we can eat the \t
-			wait()
+			task.wait()
 			-- Update the text box
 			self:SetEntryText(newText .. (insertSpace and " " or ""))
 		else
 			-- Still need to eat the \t even if there is no auto-complete to show
-			wait()
+			task.wait()
 			self:SetEntryText(self:GetEntryText())
 		end
 	else
